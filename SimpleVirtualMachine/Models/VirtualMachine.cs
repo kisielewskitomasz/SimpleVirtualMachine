@@ -97,6 +97,8 @@ namespace SimpleVirtualMachine
             while(!(Rom.InstructionList[Ram.InstructionRegister].Op == (int)Opcode.END))
             {
                 Execute(Rom.InstructionList[Ram.InstructionRegister]);
+                //Console.WriteLine("Rom.InstructionList.count: " + Rom.InstructionList.Count);
+                //Console.WriteLine("Ram.InstructionRegister: " + Ram.InstructionRegister);
             }
             return true;
         }
@@ -120,32 +122,30 @@ namespace SimpleVirtualMachine
                     bytesRead = fs.Read(nextOperand, 0, 2);
                     if (bytesRead == 0)
                     {
-                        Console.WriteLine("reading nextOperand: EOF");
+                        //Console.WriteLine("reading nextOperand: EOF");
                         break;
                     }
 
-                    Console.WriteLine($"i: {i} value: {nextOperand[0]:X2}{nextOperand[1]:X2}");
-
                     Instruction nextInstruction = new Instruction(nextOperand);
-                    Console.WriteLine($"R2: {nextInstruction.R2} R1: {nextInstruction.R1} Op: {nextInstruction.Op} ({OperationText[nextInstruction.Op]})");
+                    //Console.WriteLine($"i-byte: {i} byte-value: {nextOperand[0]:X2}{nextOperand[1]:X2} R2: {nextInstruction.R2} R1: {nextInstruction.R1} Op: {nextInstruction.Op} ({OperationText[nextInstruction.Op]})");
 
                     if (nextInstruction.Op == (int)Opcode.JMP)
                     {
-                        bytesRead = +fs.Read(nextInt, 0, 4);
+                        bytesRead += fs.Read(nextInt, 0, 4);
                         if (bytesRead == 0)
-                            Console.WriteLine("reading nextInt(jump) EOF");
+                            Console.WriteLine("Warning: EOF while reading nextInt(jump)");
                         else
                         {
                             nextInstruction.R2 = Rom.JumpList.Count;
-                            Console.WriteLine("Reading file, OP JUMP, R2: " + nextInstruction.R2);
-                            Rom.JumpList.Add(BitConverter.ToInt32(nextInt, 0));
+                            Rom.JumpList.Add(BitConverter.ToInt32(nextInt, 0) - 1);
+                            //Console.WriteLine($"i-byte: {i} const-value: {nextInt[0]:X2}{nextInt[1]:X2}{nextInt[2]:X2}{nextInt[3]:X2} JUMP-VALUE: {Rom.JumpList[nextInstruction.R2]}");
                         }
                     }
                     else if (nextInstruction.Op == (int)Opcode.LOD)
                     {
-                        bytesRead = +fs.Read(nextInt, 0, 4);
+                        bytesRead += fs.Read(nextInt, 0, 4);
                         if (bytesRead == 0)
-                            Console.WriteLine("reading nextInt(load) EOF");
+                            Console.WriteLine("Warning: EOF reading nextInt(load)");
                         else
                         {
                             nextInstruction.R2 = Rom.ConstList.Count;
@@ -161,6 +161,12 @@ namespace SimpleVirtualMachine
 
         int Execute(Instruction instruction)
         {
+            //Console.WriteLine("=== ROM LIST JUMP ===");
+            //foreach (var item in Rom.JumpList)
+            //{
+            //    Console.WriteLine($"Rom.JumpList[i]: " + item);
+            //}
+            //Console.WriteLine($"R2: {instruction.R2} R1: {instruction.R1} Op: {instruction.Op} ({OperationText[instruction.Op]})");
             switch (instruction.Op)
             {
                 case (int)Opcode.ADD: // dodaj
@@ -238,43 +244,43 @@ namespace SimpleVirtualMachine
                         {
                             case 0:
                                 {
-                                    Ram.InstructionRegister += instruction.R2;
+                                    Ram.InstructionRegister += Rom.JumpList[instruction.R2];
                                     break;
                                 }
                             case 1:
                                 {
                                     if (Ram.FlagRegister == (int)Flag.Zero)
-                                        Ram.InstructionRegister += instruction.R2;
+                                        Ram.InstructionRegister += Rom.JumpList[instruction.R2];
                                     break;
                                 }
                             case 2:
                                 {
                                     if (Ram.FlagRegister != (int)Flag.Zero)
-                                        Ram.InstructionRegister += instruction.R2;
+                                        Ram.InstructionRegister += Rom.JumpList[instruction.R2];
                                     break;
                                 }
                             case 3:
                                 {
                                     if (Ram.FlagRegister == (int)Flag.Positive)
-                                        Ram.InstructionRegister += instruction.R2;
+                                        Ram.InstructionRegister += Rom.JumpList[instruction.R2];
                                     break;
                                 }
                             case 4:
                                 {
                                     if (Ram.FlagRegister == (int)Flag.Negative)
-                                        Ram.InstructionRegister += instruction.R2;
+                                        Ram.InstructionRegister += Rom.JumpList[instruction.R2];
                                     break;
                                 }
                             case 5:
                                 {
                                     if (Ram.FlagRegister != (int)Flag.Negative)
-                                        Ram.InstructionRegister += instruction.R2;
+                                        Ram.InstructionRegister += Rom.JumpList[instruction.R2];
                                     break;
                                 }
                             case 6:
                                 {
                                     if (Ram.FlagRegister != (int)Flag.Positive)
-                                        Ram.InstructionRegister += instruction.R2;
+                                        Ram.InstructionRegister += Rom.JumpList[instruction.R2];
                                     break;
                                 }
                             default: break;
@@ -283,7 +289,7 @@ namespace SimpleVirtualMachine
                     }
                 case (int)Opcode.LOD:
                     {
-                        int constInt = Rom.JumpList[Rom.InstructionList[Rom.InstructionList.Count].R2];
+                        int constInt = Rom.ConstList[instruction.R2]; // Rom.JumpList[Rom.InstructionList[Rom.InstructionList.Count].R2]
                         break;
                     }
                 case (int)Opcode.INP:
