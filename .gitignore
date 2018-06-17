@@ -38,3 +38,8 @@ Thumbs.db
 
 # dotCover
 *.dotCover
+.vs/SimpleVirtualMachine/xs/sqlite3/db.lock
+.vs/SimpleVirtualMachine/xs/sqlite3/storage.ide
+.vs/SimpleVirtualMachine/xs/sqlite3/storage.ide-shm
+.vs/SimpleVirtualMachine/xs/sqlite3/storage.ide-wal
+.vs/SimpleVirtualMachine/xs/UserPrefs.xml

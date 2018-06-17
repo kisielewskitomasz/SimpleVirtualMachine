@@ -84,21 +84,24 @@ namespace SimpleVirtualMachine
             Ram = new RAM();
         }
 
-        public VirtualMachine(string path)
+        public VirtualMachine(string path, bool debug = false)
         {
             Rom = new ROM();
             Ram = new RAM();
             ReadVMFile(path);
-            Run();
+            Run(debug);
         }
 
-        bool Run()
+        bool Run(bool debug)
         {
             while(!(Rom.InstructionList[Ram.InstructionRegister].Op == (int)Opcode.END))
             {
                 Execute(Rom.InstructionList[Ram.InstructionRegister]);
-                //Console.WriteLine("Rom.InstructionList.count: " + Rom.InstructionList.Count);
-                //Console.WriteLine("Ram.InstructionRegister: " + Ram.InstructionRegister);
+                if (debug)
+                {
+                    Console.WriteLine("Rom.InstructionList.count: " + Rom.InstructionList.Count);
+                    Console.WriteLine("Ram.InstructionRegister: " + Ram.InstructionRegister);
+                }
             }
             return true;
         }
@@ -159,6 +162,16 @@ namespace SimpleVirtualMachine
             return true;
         }
 
+        void SetFlag(Instruction instruction)
+        {
+            if (Ram.ValueRegister[instruction.R1] > 0)
+                Ram.FlagRegister = (int)Flag.Positive;
+            else if (Ram.ValueRegister[instruction.R1] < 0)
+                Ram.FlagRegister = (int)Flag.Negative;
+            else
+                Ram.FlagRegister = (int)Flag.Zero;
+        }
+
         int Execute(Instruction instruction)
         {
             //Console.WriteLine("=== ROM LIST JUMP ===");
@@ -172,34 +185,37 @@ namespace SimpleVirtualMachine
                 case (int)Opcode.ADD: // dodaj
                     {
                         Ram.ValueRegister[instruction.R1] += Ram.ValueRegister[instruction.R2];
-                        if (Ram.ValueRegister[instruction.R1] > 0)
-                            Ram.FlagRegister = (int)Flag.Positive;
-                        else if (Ram.ValueRegister[instruction.R1] < 0)
-                            Ram.FlagRegister = (int)Flag.Negative;
-                        else
-                            Ram.FlagRegister = (int)Flag.Zero;
+                        SetFlag(instruction);
+                        //if (Ram.ValueRegister[instruction.R1] > 0)
+                        //    Ram.FlagRegister = (int)Flag.Positive;
+                        //else if (Ram.ValueRegister[instruction.R1] < 0)
+                        //    Ram.FlagRegister = (int)Flag.Negative;
+                        //else
+                            //Ram.FlagRegister = (int)Flag.Zero;
                         break;
                     }
                 case (int)Opcode.SUB: // odejmij
                     {
                         Ram.ValueRegister[instruction.R1] -= Ram.ValueRegister[instruction.R2];
-                        if (Ram.ValueRegister[instruction.R1] > 0)
-                            Ram.FlagRegister = (int)Flag.Positive;
-                        else if (Ram.ValueRegister[instruction.R1] < 0)
-                            Ram.FlagRegister = (int)Flag.Negative;
-                        else
-                            Ram.FlagRegister = (int)Flag.Zero;
+                        SetFlag(instruction);
+                        //if (Ram.ValueRegister[instruction.R1] > 0)
+                        //    Ram.FlagRegister = (int)Flag.Positive;
+                        //else if (Ram.ValueRegister[instruction.R1] < 0)
+                        //    Ram.FlagRegister = (int)Flag.Negative;
+                        //else
+                            //Ram.FlagRegister = (int)Flag.Zero;
                         break;
                     }
                 case (int)Opcode.MUL: // mnoz
                     {
                         Ram.ValueRegister[instruction.R1] *= Ram.ValueRegister[instruction.R2];
-                        if (Ram.ValueRegister[instruction.R1] > 0)
-                            Ram.FlagRegister = (int)Flag.Positive;
-                        else if (Ram.ValueRegister[instruction.R1] < 0)
-                            Ram.FlagRegister = (int)Flag.Negative;
-                        else
-                            Ram.FlagRegister = (int)Flag.Zero;
+                        SetFlag(instruction);
+                        //if (Ram.ValueRegister[instruction.R1] > 0)
+                        //    Ram.FlagRegister = (int)Flag.Positive;
+                        //else if (Ram.ValueRegister[instruction.R1] < 0)
+                        //    Ram.FlagRegister = (int)Flag.Negative;
+                        //else
+                            //Ram.FlagRegister = (int)Flag.Zero;
                         break;
                     }
                 case (int)Opcode.DIV:
@@ -211,12 +227,13 @@ namespace SimpleVirtualMachine
                             Ram.ValueRegister[instruction.R1] /= Ram.ValueRegister[instruction.R2];
                             Ram.ValueRegister[instruction.R2] = temp % Ram.ValueRegister[instruction.R2];
 
-                            if (Ram.ValueRegister[instruction.R1] > 0)
-                                Ram.FlagRegister = (int)Flag.Positive;
-                            else if (Ram.ValueRegister[instruction.R1] < 0)
-                                Ram.FlagRegister = (int)Flag.Negative;
-                            else
-                                Ram.FlagRegister = (int)Flag.Zero;
+                            SetFlag(instruction);
+                            //if (Ram.ValueRegister[instruction.R1] > 0)
+                            //    Ram.FlagRegister = (int)Flag.Positive;
+                            //else if (Ram.ValueRegister[instruction.R1] < 0)
+                            //    Ram.FlagRegister = (int)Flag.Negative;
+                            //else
+                                //Ram.FlagRegister = (int)Flag.Zero;
                         }
                         //else
                             //wyswietlBlad(bladDziel);

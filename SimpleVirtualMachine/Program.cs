@@ -1,4 +1,5 @@
 ﻿using System;
+using SimpleVirtualMachine.Models;
 
 namespace SimpleVirtualMachine
 {
@@ -13,10 +14,12 @@ namespace SimpleVirtualMachine
             //}
 
             //#TODO: if that check bool returned form ReadVMFile() method
-            //VirtualMachine VM = new VirtualMachine(args[0]);
-            VirtualMachine VM = new VirtualMachine("/Users/kisiel/Programowanie/Projekty/Cpp/MaszynaWirtualnaProgramy/Ja/max_3.bin");
-            //VirtualMachine VM = new VirtualMachine("/Users/kisiel/Programowanie/Projekty/Cpp/MaszynaWirtualnaProgramy/Ja/dod_ab.bin");
 
+            Menu menu = new Menu();
+
+            //VirtualMachine VM = new VirtualMachine(args[0]);
+            //VirtualMachine VM = new VirtualMachine("/Users/kisiel/Programowanie/Projekty/Cpp/MaszynaWirtualnaProgramy/Ja/max_3.bin");
+            //VirtualMachine VM = new VirtualMachine("/Users/kisiel/Programowanie/Projekty/Cpp/MaszynaWirtualnaProgramy/Ja/dod_ab.bin");
 
             return 0;
         }
