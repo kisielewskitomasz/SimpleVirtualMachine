@@ -34,9 +34,14 @@ namespace SimpleVirtualMachine.Models
         {
             for (int i = 1; i < commands.Length; i++)
             {
-                Console.WriteLine($"{i}. {commands[i].Description}");
+                Console.Write($"| {i}. {commands[i].Description}");
+                Console.CursorLeft = 78;
+                Console.WriteLine("|");
             }
-            Console.WriteLine($"{0}. {commands[0].Description}");
+            Console.Write($"| {0}. {commands[0].Description}");
+            Console.CursorLeft = 78;
+            Console.WriteLine("|");
+            Console.WriteLine("+-----------------------------------------------------------------------------+");
         }
 
         int GetUserChoice(ICommand[] commands)
