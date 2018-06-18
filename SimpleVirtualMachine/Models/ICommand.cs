@@ -1,7 +1,6 @@
 ﻿using System;
-using SimpleVirtualMachine.Models;
 
-namespace SimpleVirtualMachine
+namespace SimpleVirtualMachine.Models
 {
     interface ICommand
     {

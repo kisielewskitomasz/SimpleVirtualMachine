@@ -1,4 +1,5 @@
 ﻿using System;
+
 namespace SimpleVirtualMachine.Models
 {
     public class Menu

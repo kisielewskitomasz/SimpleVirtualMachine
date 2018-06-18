@@ -2,17 +2,16 @@
 using System.IO;
 using System.Collections.Generic;
 
-namespace SimpleVirtualMachine
+namespace SimpleVirtualMachine.Models
 {
     public class VirtualMachine
     {
-        enum Registers { r1 = 0, r2 = 1 };
-        enum Flag { Negative = -1, Zero = 0, Positive = 1 };
-        enum Opcode { ADD = 0, SUB = 1, MUL = 2, DIV = 3, CMP = 4, CPY = 5, JMP = 6, LOD = 7, INP = 8, OUT = 9, END = 10, SAV = 11 }; // SAV isn't a opcode of VM, it's using for simplify editor
-        enum RunMode { Normal = 0, StepByStep = 1 };
-        enum ErrorCode { DividedByZero = 0, EndOfFile, OpenFile };
+        public enum Flag { Negative = -1, Zero = 0, Positive = 1 };
+        public enum Opcode { ADD = 0, SUB = 1, MUL = 2, DIV = 3, CMP = 4, CPY = 5, JMP = 6, LOD = 7, INP = 8, OUT = 9, END = 10, SAV = 11 }; // SAV isn't a opcode of VM, it's using for simplify editor
+        public enum RunMode { Normal = 0, StepByStep = 1 };
+        public enum ErrorCode { DividedByZero = 0, EndOfFile, OpenFile };
 
-        static readonly string[] OperationText = { "dodaj", "odejmij", "mnoz", "dziel", "porownaj", "kopiuj", "skocz", "wczytaj", "pobierz", "wyswietl", "zakoncz", "zapisz" };
+        public static readonly string[] OperationText = { "dodaj", "odejmij", "mnoz", "dziel", "porownaj", "kopiuj", "skocz", "wczytaj", "pobierz", "wyswietl", "zakoncz", "zapisz" };
 
         ROM Rom { get => _rom; set => _rom = value; }
         ROM _rom;
@@ -41,7 +40,7 @@ namespace SimpleVirtualMachine
         }
 
         class ROM
-        {
+        {            
             public List<Instruction> InstructionList { get => _instructionList; set => _instructionList = value; }
             public List<int> ConstList { get => _constList; set => _constList = value; }
             public List<int> JumpList { get => _jumpList; set => _jumpList = value; }
@@ -58,7 +57,51 @@ namespace SimpleVirtualMachine
             }
         }
 
-        class Instruction
+        public class Constant
+        {
+            public byte[] Bytes { get => _bytes; set => _bytes = value; }
+
+            byte[] _bytes = new byte[4];
+
+            public Constant()
+            {
+
+            }
+
+            public Constant(int integer)
+            {
+                Bytes = BitConverter.GetBytes(integer);
+            }
+
+            public int ToInt32()
+            {
+                return BitConverter.ToInt32(Bytes, 0);
+            }
+        }
+
+        public class Operand
+        {
+            public byte[] Bytes { get => _bytes; set => _bytes = value; }
+
+            byte[] _bytes = new byte[2];
+
+            public Operand()
+            {
+
+            }
+
+            public Operand(Instruction instruction)
+            {
+                Bytes = BitConverter.GetBytes((instruction.Op) | (instruction.R1 << 4) | (instruction.R2 << 10));
+            }
+
+            public int ToInt32()
+            {
+                return BitConverter.ToInt32(Bytes, 0);
+            }
+        }
+
+        public class Instruction
         {
             public int Op { get => _op; set => _op = value; }
             public int R1 { get => _r1; set => _r1 = value; }
@@ -67,6 +110,29 @@ namespace SimpleVirtualMachine
             int _op;
             int _r1;
             int _r2;
+
+            public Instruction()
+            {
+                Op = 0;
+                R1 = 0;
+                R2 = 0;
+            }
+
+            public Instruction(int opcode)
+            {
+                Op = opcode;
+                R1 = 0;
+                R2 = 0;
+            }
+
+            public Instruction(Operand operand)
+            {
+                short operation = BitConverter.ToInt16(operand.Bytes, 0);
+
+                Op = (operation & 0b1111);
+                R1 = ((operation & 0b1111110000) >> 4);
+                R2 = ((operation & 0b1111110000000000) >> 10);
+            }
 
             public Instruction(byte[] operand)
             {
@@ -84,17 +150,17 @@ namespace SimpleVirtualMachine
             Ram = new RAM();
         }
 
-        public VirtualMachine(string path, bool debug = false)
+        public VirtualMachine(bool debug = false)
         {
             Rom = new ROM();
             Ram = new RAM();
-            ReadVMFile(path);
+            ReadVMFile(InputPath());
             Run(debug);
         }
 
         bool Run(bool debug)
         {
-            while(!(Rom.InstructionList[Ram.InstructionRegister].Op == (int)Opcode.END))
+            while (!(Rom.InstructionList[Ram.InstructionRegister].Op == (int)Opcode.END))
             {
                 Execute(Rom.InstructionList[Ram.InstructionRegister]);
                 if (debug)
@@ -119,10 +185,10 @@ namespace SimpleVirtualMachine
                 int bytesRead = 0;
                 for (int i = 0; i < fs.Length; i += bytesRead)
                 {
-                    byte[] nextOperand = new byte[2];
-                    byte[] nextInt = new byte[4];
+                    Operand nextOperand = new Operand();
+                    Constant nextConstant = new Constant();
 
-                    bytesRead = fs.Read(nextOperand, 0, 2);
+                    bytesRead = fs.Read(nextOperand.Bytes, 0, 2);
                     if (bytesRead == 0)
                     {
                         //Console.WriteLine("reading nextOperand: EOF");
@@ -134,25 +200,25 @@ namespace SimpleVirtualMachine
 
                     if (nextInstruction.Op == (int)Opcode.JMP)
                     {
-                        bytesRead += fs.Read(nextInt, 0, 4);
+                        bytesRead += fs.Read(nextConstant.Bytes, 0, 4);
                         if (bytesRead == 0)
                             Console.WriteLine("Warning: EOF while reading nextInt(jump)");
                         else
                         {
                             nextInstruction.R2 = Rom.JumpList.Count;
-                            Rom.JumpList.Add(BitConverter.ToInt32(nextInt, 0) - 1);
+                            Rom.JumpList.Add(BitConverter.ToInt32(nextConstant.Bytes, 0) - 1);
                             //Console.WriteLine($"i-byte: {i} const-value: {nextInt[0]:X2}{nextInt[1]:X2}{nextInt[2]:X2}{nextInt[3]:X2} JUMP-VALUE: {Rom.JumpList[nextInstruction.R2]}");
                         }
                     }
                     else if (nextInstruction.Op == (int)Opcode.LOD)
                     {
-                        bytesRead += fs.Read(nextInt, 0, 4);
+                        bytesRead += fs.Read(nextConstant.Bytes, 0, 4);
                         if (bytesRead == 0)
                             Console.WriteLine("Warning: EOF reading nextInt(load)");
                         else
                         {
                             nextInstruction.R2 = Rom.ConstList.Count;
-                            Rom.ConstList.Add(BitConverter.ToInt32(nextInt, 0));
+                            Rom.ConstList.Add(BitConverter.ToInt32(nextConstant.Bytes, 0));
                         }
                     }
 
@@ -191,7 +257,7 @@ namespace SimpleVirtualMachine
                         //else if (Ram.ValueRegister[instruction.R1] < 0)
                         //    Ram.FlagRegister = (int)Flag.Negative;
                         //else
-                            //Ram.FlagRegister = (int)Flag.Zero;
+                        //Ram.FlagRegister = (int)Flag.Zero;
                         break;
                     }
                 case (int)Opcode.SUB: // odejmij
@@ -203,7 +269,7 @@ namespace SimpleVirtualMachine
                         //else if (Ram.ValueRegister[instruction.R1] < 0)
                         //    Ram.FlagRegister = (int)Flag.Negative;
                         //else
-                            //Ram.FlagRegister = (int)Flag.Zero;
+                        //Ram.FlagRegister = (int)Flag.Zero;
                         break;
                     }
                 case (int)Opcode.MUL: // mnoz
@@ -215,7 +281,7 @@ namespace SimpleVirtualMachine
                         //else if (Ram.ValueRegister[instruction.R1] < 0)
                         //    Ram.FlagRegister = (int)Flag.Negative;
                         //else
-                            //Ram.FlagRegister = (int)Flag.Zero;
+                        //Ram.FlagRegister = (int)Flag.Zero;
                         break;
                     }
                 case (int)Opcode.DIV:
@@ -233,10 +299,10 @@ namespace SimpleVirtualMachine
                             //else if (Ram.ValueRegister[instruction.R1] < 0)
                             //    Ram.FlagRegister = (int)Flag.Negative;
                             //else
-                                //Ram.FlagRegister = (int)Flag.Zero;
+                            //Ram.FlagRegister = (int)Flag.Zero;
                         }
                         //else
-                            //wyswietlBlad(bladDziel);
+                        //wyswietlBlad(bladDziel);
                         break;
                     }
                 case (int)Opcode.CMP:
@@ -260,47 +326,32 @@ namespace SimpleVirtualMachine
                         switch (instruction.R1)
                         {
                             case 0:
-                                {
-                                    Ram.InstructionRegister += Rom.JumpList[instruction.R2];
-                                    break;
-                                }
+                                Ram.InstructionRegister += Rom.JumpList[instruction.R2];
+                                break;
                             case 1:
-                                {
-                                    if (Ram.FlagRegister == (int)Flag.Zero)
-                                        Ram.InstructionRegister += Rom.JumpList[instruction.R2];
-                                    break;
-                                }
+                                if (Ram.FlagRegister == (int)Flag.Zero)
+                                    Ram.InstructionRegister += Rom.JumpList[instruction.R2];
+                                break;
                             case 2:
-                                {
-                                    if (Ram.FlagRegister != (int)Flag.Zero)
-                                        Ram.InstructionRegister += Rom.JumpList[instruction.R2];
-                                    break;
-                                }
+                                if (Ram.FlagRegister != (int)Flag.Zero)
+                                    Ram.InstructionRegister += Rom.JumpList[instruction.R2];
+                                break;
                             case 3:
-                                {
-                                    if (Ram.FlagRegister == (int)Flag.Positive)
-                                        Ram.InstructionRegister += Rom.JumpList[instruction.R2];
-                                    break;
-                                }
+                                if (Ram.FlagRegister == (int)Flag.Positive)
+                                    Ram.InstructionRegister += Rom.JumpList[instruction.R2];
+                                break;
                             case 4:
-                                {
-                                    if (Ram.FlagRegister == (int)Flag.Negative)
-                                        Ram.InstructionRegister += Rom.JumpList[instruction.R2];
-                                    break;
-                                }
+                                if (Ram.FlagRegister == (int)Flag.Negative)
+                                    Ram.InstructionRegister += Rom.JumpList[instruction.R2];
+                                break;
                             case 5:
-                                {
-                                    if (Ram.FlagRegister != (int)Flag.Negative)
-                                        Ram.InstructionRegister += Rom.JumpList[instruction.R2];
-                                    break;
-                                }
+                                if (Ram.FlagRegister != (int)Flag.Negative)
+                                    Ram.InstructionRegister += Rom.JumpList[instruction.R2];
+                                break;
                             case 6:
-                                {
-                                    if (Ram.FlagRegister != (int)Flag.Positive)
-                                        Ram.InstructionRegister += Rom.JumpList[instruction.R2];
-                                    break;
-                                }
-                            default: break;
+                                if (Ram.FlagRegister != (int)Flag.Positive)
+                                    Ram.InstructionRegister += Rom.JumpList[instruction.R2];
+                                break;
                         }
                         break;
                     }
@@ -334,6 +385,25 @@ namespace SimpleVirtualMachine
             Ram.InstructionRegister++;
 
             return 0;
+        }
+
+        static string InputPath()
+        {
+            bool inputOk = false;
+            string path = "";
+            while (!(inputOk))
+            {
+                Console.WriteLine("Podaj nazwe pliku (bez rozszerzenia): ");
+                Console.Write("> ");
+                path = Console.ReadLine().Trim();
+                if (path.Length < 1)
+                    Console.WriteLine("Bledna sciezka!");
+                else
+                {
+                    inputOk = true;
+                }
+            }
+            return (path + ".bin");
         }
     }
 }
