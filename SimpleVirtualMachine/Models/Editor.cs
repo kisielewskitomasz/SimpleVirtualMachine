@@ -28,9 +28,7 @@ namespace SimpleVirtualMachine.Models
                     fs.Write(OperandList[i].Bytes, 0, 2);
                     Instruction instruction = new Instruction(OperandList[i]);
                     if (instruction.Op == (int)Opcode.JMP || instruction.Op == (int)Opcode.LOD)
-                    {
                         fs.Write(ConstantList[j++].Bytes, 0, 4);
-                    }
                 }
                 return true;
             }
@@ -108,6 +106,8 @@ namespace SimpleVirtualMachine.Models
                             OperandList.Add(operand);
                             break;
                         }
+                    case (int)Opcode.SAV:
+                        break;
                     default:
                         {
                             Console.WriteLine("Nieprawidlowa operacja!");
@@ -131,9 +131,7 @@ namespace SimpleVirtualMachine.Models
                 if (path.Length < 1)
                     Console.WriteLine("Bledna sciezka!");
                 else
-                {
                     inputOk = true;
-                }
             }
             return (path + ".bin");
         }
