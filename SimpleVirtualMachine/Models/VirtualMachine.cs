@@ -63,9 +63,8 @@ namespace SimpleVirtualMachine.Models
 
             byte[] _bytes = new byte[4];
 
-            public Constant()
+            public Constant() 
             {
-
             }
 
             public Constant(int integer)
@@ -85,9 +84,8 @@ namespace SimpleVirtualMachine.Models
 
             byte[] _bytes = new byte[2];
 
-            public Operand()
+            public Operand() 
             {
-
             }
 
             public Operand(Instruction instruction)
@@ -128,15 +126,6 @@ namespace SimpleVirtualMachine.Models
             public Instruction(Operand operand)
             {
                 short operation = BitConverter.ToInt16(operand.Bytes, 0);
-
-                Op = (operation & 0b1111);
-                R1 = ((operation & 0b1111110000) >> 4);
-                R2 = ((operation & 0b1111110000000000) >> 10);
-            }
-
-            public Instruction(byte[] operand)
-            {
-                short operation = BitConverter.ToInt16(operand, 0);
 
                 Op = (operation & 0b1111);
                 R1 = ((operation & 0b1111110000) >> 4);
@@ -191,7 +180,7 @@ namespace SimpleVirtualMachine.Models
                     bytesRead = fs.Read(nextOperand.Bytes, 0, 2);
                     if (bytesRead == 0)
                     {
-                        //Console.WriteLine("reading nextOperand: EOF");
+                        Console.WriteLine("Warning: EOF while reading nextOperand");
                         break;
                     }
 
@@ -240,48 +229,24 @@ namespace SimpleVirtualMachine.Models
 
         int Execute(Instruction instruction)
         {
-            //Console.WriteLine("=== ROM LIST JUMP ===");
-            //foreach (var item in Rom.JumpList)
-            //{
-            //    Console.WriteLine($"Rom.JumpList[i]: " + item);
-            //}
-            //Console.WriteLine($"R2: {instruction.R2} R1: {instruction.R1} Op: {instruction.Op} ({OperationText[instruction.Op]})");
             switch (instruction.Op)
             {
-                case (int)Opcode.ADD: // dodaj
+                case (int)Opcode.ADD:
                     {
                         Ram.ValueRegister[instruction.R1] += Ram.ValueRegister[instruction.R2];
                         SetFlag(instruction);
-                        //if (Ram.ValueRegister[instruction.R1] > 0)
-                        //    Ram.FlagRegister = (int)Flag.Positive;
-                        //else if (Ram.ValueRegister[instruction.R1] < 0)
-                        //    Ram.FlagRegister = (int)Flag.Negative;
-                        //else
-                        //Ram.FlagRegister = (int)Flag.Zero;
                         break;
                     }
-                case (int)Opcode.SUB: // odejmij
+                case (int)Opcode.SUB:
                     {
                         Ram.ValueRegister[instruction.R1] -= Ram.ValueRegister[instruction.R2];
                         SetFlag(instruction);
-                        //if (Ram.ValueRegister[instruction.R1] > 0)
-                        //    Ram.FlagRegister = (int)Flag.Positive;
-                        //else if (Ram.ValueRegister[instruction.R1] < 0)
-                        //    Ram.FlagRegister = (int)Flag.Negative;
-                        //else
-                        //Ram.FlagRegister = (int)Flag.Zero;
                         break;
                     }
-                case (int)Opcode.MUL: // mnoz
+                case (int)Opcode.MUL:
                     {
                         Ram.ValueRegister[instruction.R1] *= Ram.ValueRegister[instruction.R2];
                         SetFlag(instruction);
-                        //if (Ram.ValueRegister[instruction.R1] > 0)
-                        //    Ram.FlagRegister = (int)Flag.Positive;
-                        //else if (Ram.ValueRegister[instruction.R1] < 0)
-                        //    Ram.FlagRegister = (int)Flag.Negative;
-                        //else
-                        //Ram.FlagRegister = (int)Flag.Zero;
                         break;
                     }
                 case (int)Opcode.DIV:
@@ -294,15 +259,9 @@ namespace SimpleVirtualMachine.Models
                             Ram.ValueRegister[instruction.R2] = temp % Ram.ValueRegister[instruction.R2];
 
                             SetFlag(instruction);
-                            //if (Ram.ValueRegister[instruction.R1] > 0)
-                            //    Ram.FlagRegister = (int)Flag.Positive;
-                            //else if (Ram.ValueRegister[instruction.R1] < 0)
-                            //    Ram.FlagRegister = (int)Flag.Negative;
-                            //else
-                            //Ram.FlagRegister = (int)Flag.Zero;
                         }
-                        //else
-                        //wyswietlBlad(bladDziel);
+                        else
+                            Print.Error.ErrorDivisionByZero();
                         break;
                     }
                 case (int)Opcode.CMP:
@@ -357,7 +316,7 @@ namespace SimpleVirtualMachine.Models
                     }
                 case (int)Opcode.LOD:
                     {
-                        int constInt = Rom.ConstList[instruction.R2]; // Rom.JumpList[Rom.InstructionList[Rom.InstructionList.Count].R2]
+                        int constInt = Rom.ConstList[instruction.R2];
                         break;
                     }
                 case (int)Opcode.INP:
@@ -399,9 +358,7 @@ namespace SimpleVirtualMachine.Models
                 if (path.Length < 1)
                     Console.WriteLine("Bledna sciezka!");
                 else
-                {
                     inputOk = true;
-                }
             }
             return (path + ".bin");
         }

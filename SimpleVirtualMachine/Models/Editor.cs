@@ -26,7 +26,7 @@ namespace SimpleVirtualMachine.Models
                 for (int i = 0, j = 0; i < OperandList.Count; i++)
                 {
                     fs.Write(OperandList[i].Bytes, 0, 2);
-                    Instruction instruction = new Instruction(OperandList[i].Bytes);
+                    Instruction instruction = new Instruction(OperandList[i]);
                     if (instruction.Op == (int)Opcode.JMP || instruction.Op == (int)Opcode.LOD)
                     {
                         fs.Write(ConstantList[j++].Bytes, 0, 4);
@@ -74,7 +74,6 @@ namespace SimpleVirtualMachine.Models
                         {
                             Instruction instruction = new Instruction(inputOpcode);
                             InputFirstRegister(instruction);
-                            //instruction.R2 = 0;
                             operand = new Operand(instruction);
                             OperandList.Add(operand);
                             Console.WriteLine($"Operacja {OperationText[instruction.Op]}: {instruction.R1}*2^4 + {instruction.Op} = {operand.ToInt32()}");
@@ -84,31 +83,27 @@ namespace SimpleVirtualMachine.Models
                         {
                             Instruction instruction = new Instruction(inputOpcode);
                             InputJumpCondition(instruction);
-                            //instruction.R2 = 0;
                             operand = new Operand(instruction);
                             constant = new Constant(InputJumpValue());
                             OperandList.Add(operand);
                             ConstantList.Add(constant);
-                            Console.WriteLine($"Operacja {OperationText[instruction.Op]}: {instruction.R2}*2^10 + {instruction.R1}*2^4 + {instruction.Op} = {operand.ToInt32()} SKOK: {constant.ToInt32()}");
+                            Console.WriteLine($"Operacja {OperationText[instruction.Op]}: {instruction.R2}*2^10 + {instruction.R1}*2^4 + {instruction.Op} = {operand.ToInt32()}, Skok: {constant.ToInt32()}");
                             break;
                         }
                     case (int)Opcode.LOD:
                         {
                             Instruction instruction = new Instruction(inputOpcode);
                             InputFirstRegister(instruction);
-                            //instruction.R2 = 0;
                             operand = new Operand(instruction);
                             OperandList.Add(operand);
                             constant = new Constant(InputConstantValue());
                             ConstantList.Add(constant);
-                            Console.WriteLine($"Operacja {OperationText[instruction.Op]}: {instruction.R2}*2^10 + {instruction.R1}*2^4 + {instruction.Op} = {operand.ToInt32()} SKOK: {constant.ToInt32()}");
+                            Console.WriteLine($"Operacja {OperationText[instruction.Op]}: {instruction.R2}*2^10 + {instruction.R1}*2^4 + {instruction.Op} = {operand.ToInt32()}, Stala: {constant.ToInt32()}");
                             break;
                         }
                     case (int)Opcode.END:
                         {
                             Instruction instruction = new Instruction(inputOpcode);
-                            //instruction.R1 = 0;
-                            //instruction.R2 = 0;
                             operand = new Operand(instruction);
                             OperandList.Add(operand);
                             break;
@@ -151,7 +146,7 @@ namespace SimpleVirtualMachine.Models
                 Console.WriteLine("Podaj warunek skoku (0 - 6): ");
                 Console.Write("> ");
                 int inputJumpCondition = -1;
-                if ((Int32.TryParse(Console.ReadLine(), out inputJumpCondition)) || (inputJumpCondition >= 0) || (inputJumpCondition <= 6))
+                if ((Int32.TryParse(Console.ReadLine(), out inputJumpCondition)) && (inputJumpCondition >= 0) && (inputJumpCondition <= 6))
                 {
                     instruction.R1 = inputJumpCondition;
                     inputOk = true;
@@ -203,7 +198,7 @@ namespace SimpleVirtualMachine.Models
                 Console.WriteLine("Podaj indeks pierwszego rejestru (0 - 63): ");
                 Console.Write("> ");
                 int inputRegister = -1;
-                if ((Int32.TryParse(Console.ReadLine(), out inputRegister)) || (inputRegister >= 0) || (inputRegister <= 63))
+                if ((Int32.TryParse(Console.ReadLine(), out inputRegister)) && (inputRegister >= 0) && (inputRegister <= 63))
                 {
                     instruction.R1 = inputRegister;
                     inputOk = true;
@@ -223,7 +218,7 @@ namespace SimpleVirtualMachine.Models
                 Console.WriteLine("Podaj indeks drugiego rejestru (0 - 63): ");
                 Console.Write("> ");
                 int inputRegister = -1;
-                if (Int32.TryParse(Console.ReadLine(), out inputRegister) || (inputRegister >= 0) || (inputRegister <= 63))
+                if (Int32.TryParse(Console.ReadLine(), out inputRegister) && (inputRegister >= 0) && (inputRegister <= 63))
                 {
                     instruction.R2 = inputRegister;
                     inputOk = true;
